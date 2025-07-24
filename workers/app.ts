@@ -1,19 +1,24 @@
 import { Hono } from "hono";
-import { createRequestHandler } from "react-router";
 
-const app = new Hono();
+type Bindings = {
+  DB: D1Database;
+};
 
-// Add more routes here
+const app = new Hono<{ Bindings: Bindings }>();
 
-app.get("*", (c) => {
-  const requestHandler = createRequestHandler(
-    () => import("virtual:react-router/server-build"),
-    import.meta.env.MODE,
-  );
+// D1データベースから全ユーザー一覧を取得するAPI例
+app.get("/users", async (c) => {
+  const db = c.env.DB;
+  const { results } = await db.prepare("SELECT id, name FROM users").all();
+  return c.json(results);
+});
 
-  return requestHandler(c.req.raw, {
-    cloudflare: { env: c.env, ctx: c.executionCtx },
-  });
+// D1データベースに新規ユーザーを追加するAPI例
+app.post("/users", async (c) => {
+  const body = await c.req.json<{ name: string }>();
+  const db = c.env.DB;
+  await db.prepare("INSERT INTO users (name) VALUES (?)").bind(body.name).run();
+  return c.text("User added");
 });
 
 export default app;
