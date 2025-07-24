@@ -10,7 +10,7 @@ const app = new Hono<{ Bindings: Bindings }>();
 app.get("/users", async (c) => {
   const db = c.env.D1bind;
   try {
-    const { results } = await db.prepare("SELECT * FROM test-table").all();
+    const { results } = await db.prepare("SELECT * FROM \"test-table\"").all();
     return c.json(results);
   } catch (e) {
     return c.text("DB Error: " + (e instanceof Error ? e.message : String(e)), 500);
@@ -22,7 +22,7 @@ app.post("/users", async (c) => {
   const body = await c.req.json<{ name: string }>();
   const db = c.env.D1bind;
   try {
-    await db.prepare("INSERT INTO test-table (name) VALUES (?)").bind(body.name).run();
+    await db.prepare("INSERT INTO \"test-table\" (name) VALUES (?)").bind(body.name).run();
     return c.text("User added");
   } catch (e) {
     return c.text("DB Error: " + (e instanceof Error ? e.message : String(e)), 500);
